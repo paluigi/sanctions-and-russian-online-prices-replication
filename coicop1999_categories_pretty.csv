@@ -1,0 +1,38 @@
+category,pretty
+1-1_food,01.1 Food
+1-1-2_meat,01.1.2 Meat
+1-1-3_fish,01.1.3 Fish
+1-1-4_milk,"01.1.4 Milk, cheese and eggs"
+1-1-8_confectionery,"01.1.8 Sugar, jam, honey, chocolate and confectionery"
+1-1-9_otherfood,01.1.9 Food products n.e.c.
+1-2-1_coffee,"01.2.1 Coffee, tea and cocoa"
+1-2-2_drinks,"01.2.2 Mineral waters, soft drinks, fruit and vegetable juices"
+2-1_alcohol,02.1 Alcoholic beverages
+3-1-2_garnments,03.1.2 Garments
+3-1-3_othergarnments,03.1.3 Other articles of clothing and clothing accessories
+4-3-1_materials,04.3.1 Materials for the maintenance and repair of the dwelling
+5-1-1_furniture,05.1.1 Furniture and furnishings
+5-1-2_carpets,05.1.2 Carpets
+5-2-0_textiles,05.2.0 Household textiles
+5-3-1_majorappliances,05.3.1 Major household appliances whether electric or not
+5-3-2_smallappliances,05.3.2 Small electric household appliances
+5-4-0_glassware,"05.4.0 Glassware, tableware and household utensils"
+5-5-1_majortools,05.5.1 Major tools and equipment
+5-5-2_smalltools,05.5.2 Small tools and miscellaneous accessories
+5-6-1_nondurables,05.6.1 Non-durable household goods
+6-1-2_othermedical,06.1.2 Other medical products
+7-2-1_transportaccessories,07.2.1 Spare parts and accessories for personal transport equipment
+8-2-0_phones,08.2.0 Telephone and telefax equipment
+9-1-1_audiovideo,"09.1.1 Equipment for the reception, recording and reproduction of sound and pictures"
+9-1-2_recording,09.1.2 Photographic and cinematographic equipment and optical instruments
+9-1-3_it,09.1.3 Information processing equipment
+9-2-1_majorrecreation,09.2.1 Major durables for outdoor recreation
+9-3-1_games,"09.3.1 Games, toys and hobbies"
+9-3-2_sport,"09.3.2 Equipment for sport, camping and open-air recreation"
+9-3-3_garden,"09.3.3 Gardens, plants and flowers"
+9-3-4_pets,09.3.4 Pets and related products
+9-4-5_books,09.4.5 Books
+12-1-2_electriccare,12.1.2 Electric appliances for personal care
+12-1-3_othercare,"12.1.3 Other appliances, articles and products for personal care"
+12-3-1_watches,"12.3.1 Jewellery, clocks and watches"
+12-3-2_personaleffects,12.3.2 Other personal effects

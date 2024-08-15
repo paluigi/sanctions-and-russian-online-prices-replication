@@ -1,0 +1,139 @@
+library(dplyr)
+library(readxl)
+library(xts)
+library(DBI)
+library(fUnitRoots)
+library(urca)
+library(vars)
+library(aod)
+library(zoo)
+library(tseries)
+library(bootUR)
+library(Rbeast)
+library(purrr)
+
+# Prevent scientific notation
+options(scipen=999)
+# Decimals to be saved
+n_dec <- 7
+
+# Connect to DB
+data_path <- file.path(getwd(), "elaborations")
+
+stock_data <- "stock"
+target <- "causality_intrate_breaks_stock_breaks"
+
+
+con_stock <- dbConnect(RSQLite::SQLite(),
+                       dbname = file.path(data_path, paste0(stock_data, ".db")))
+
+con_target <- dbConnect(RSQLite::SQLite(),
+                        dbname = file.path(data_path, paste0(target, ".db")))
+
+
+# Get Interest rate data
+int_df <-  read_excel("official_data/ruonia.xlsx",
+                      col_types = c("date", "numeric", "skip",
+                                    "skip", "skip", "skip", "skip", "skip",
+                                    "skip", "skip", "skip"))
+
+# Manipulate interest rate data ans get structural break probability via BEAST
+int_grouped_df <- int_df %>%
+    mutate(DT = as.Date(DT)) %>%
+    filter(DT >= as.Date("2021-02-14")) %>%
+    filter(DT < as.Date("2022-10-10")) %>% # Removing data after CPI cutoff...to be updated over time
+    group_by(week = cut(DT, "week")) %>%
+    mutate(date = as.Date(week) + 6)  %>%  # Move reference to the end of the week
+    mutate(rate=mean(ruo, na.rm = TRUE)) %>%
+    ungroup() %>%
+    distinct(date, rate) %>%
+    arrange(date)
+
+int_all_ts <- as.xts(int_grouped_df$rate, order.by = int_grouped_df$date)
+names(int_all_ts) <- "rate"
+# add missing dates
+int_all_ts <- merge(int_all_ts, seq.Date(as.Date("2021-02-21"), as.Date("2022-10-09"), by = "week"))
+int_all_ts <- na.fill(int_all_ts, "extend")
+
+# Compute Beast algorithm
+res_beast <- beast(int_all_ts, season = "none")
+int_all_ts$cp_prob <- round(res_beast[["trend"]][["cpOccPr"]], n_dec)
+
+# Get structural break probability for Stock
+stock_df <- data.frame(date=as.Date("2021-02-21"))
+for (table in dbListTables(con_stock)) {
+    df <- dbReadTable(con_stock, table)
+    df$date <- as.Date(df$date, format = "%Y-%m-%d")
+    df <- df %>% dplyr::select(date, cp_prob)
+    colnames(df) <- c("date", table)
+    stock_df <- full_join(stock_df, df, by= "date")
+}
+
+stock_ts <-as.xts(subset(stock_df, select=-c(date)), order.by = stock_df$date)
+stock_ts$average <- rowMeans(stock_ts)
+
+# Renaming as CPI to leverage the loop already written
+cpi_ts <- stock_ts
+
+##### INTEREST RATE CHANGE #####
+for (tab in names(cpi_ts)){
+    tryCatch({
+        ##### CPI TY Causality #####
+        # Check order of integration for the time series
+        cpi_order_integration <- order_integration(
+            merge(int_all_ts$cp_prob, cpi_ts[,tab]),
+            max_order = 5)
+        # Select max order of integration
+        var_cpi_select <- VARselect(merge(int_all_ts$cp_prob, cpi_ts[,tab]),
+                                    lag.max = 12,
+                                    type = "both")
+        # Selecting the lag for VAR
+        AIC_cpi <- var_cpi_select$selection[[1]]
+        cpi_max_ord <- max(cpi_order_integration$order_int)
+        total_cpi_lag <- AIC_cpi + cpi_max_ord
+
+        # Performing VAR
+        var_cpi <- VAR(
+            merge(int_all_ts$cp_prob, cpi_ts[,tab]),
+            p=total_cpi_lag,
+            type="both")
+
+
+        cpi_serial <- serial.test(var_cpi, type="BG", lags.pt = 52, lags.bg=52)
+        if(1/roots(var_cpi)[[1]] > 1 || 1/roots(var_cpi)[[2]] > 1){
+            roots_cpi <- "stable"
+        } else {
+            roots_cpi <- "not stable"
+        }
+
+
+        # Causality from first column (sanctions) to second (breaks)
+        wt2_cpi<-wald.test(
+            b=coef(var_cpi$varresult[[2]]),
+            Sigma=vcov(var_cpi$varresult[[2]]),
+            Terms=c(seq(1, AIC_cpi*2, 2)))
+        cpi_causality_p <- wt2_cpi[["result"]][["chi2"]][["P"]]
+
+
+        # Saving results
+        results_df <- data.frame(
+            item = c("stock"),
+            aic_lag = c(AIC_cpi),
+            max_int_order = c(cpi_max_ord),
+            serial_ac_p = c(cpi_serial$serial$p.value),
+            root = c(roots_cpi),
+            causality_p = c(cpi_causality_p)
+        )
+        dbWriteTable(con_target, tab, results_df, overwrite = TRUE)
+    }, error = function(e) {
+        cat("Error for category ", tab, ": ", conditionMessage(e), "\n")
+        #next
+    })
+}
+
+
+# Disconnect from DB
+dbDisconnect(conn = con_stock)
+dbDisconnect(conn = con_target)
+
+
