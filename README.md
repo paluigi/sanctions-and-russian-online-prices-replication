@@ -19,4 +19,4 @@ pages={483-521}}
 
 
 Replication data available on Mendeley Data:
-Palumbo, Luigi; Benchimol, Jonathan (2024), “Sanctions and Russian Online Prices - Replication Data”, Mendeley Data, V1, doi: [10.17632/n3zjsfdbvr.2](https://doi.org/10.17632/n3zjsfdbvr.1), link: https://data.mendeley.com/datasets/n3zjsfdbvr/1
+Palumbo, Luigi; Benchimol, Jonathan (2024), “Sanctions and Russian Online Prices - Replication Data”, Mendeley Data, V2, doi: [10.17632/n3zjsfdbvr.2](https://doi.org/10.17632/n3zjsfdbvr.2), link: [https://data.mendeley.com/datasets/n3zjsfdbvr/2](https://data.mendeley.com/datasets/n3zjsfdbvr/2)
